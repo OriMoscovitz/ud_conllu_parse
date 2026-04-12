@@ -52,6 +52,15 @@ pip install -e ".[dev]"
 
 ---
 
+### Option 2 — Automatic Setup (Recommended)
+
+```bash
+chmod +x setup.sh
+./setup.sh
+```
+
+---
+
 ## Usage
 
 Run evaluation with the `Qwen2.5-1.5B-Instruct` model:
