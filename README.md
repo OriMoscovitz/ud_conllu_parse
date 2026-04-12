@@ -57,8 +57,8 @@ pip install -e ".[dev]"
 Clone the UD Parsing Task Repository and run:
 
 ```bash
-chmod +x setup.sh
-./setup.sh
+chmod +x ud_conllu_parse/setup.sh
+.ud_conllu_parse/setup.sh
 ```
 
 ---
