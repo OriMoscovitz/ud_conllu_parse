@@ -1,2 +1,67 @@
-# ud_conllu_parse
-lm-harness evaluation task for conllu parsing
+# UD CoNLL-U parsing task for lm-eval-harness
+
+This task adds a generative `lm-eval-harness` benchmark that:
+
+- loads local `train`, `dev`, and `test` JSONL files,
+- uses the first 3 examples from `train` as few-shot exemplars,
+- prompts the model to convert each sentence into CoNLL-U,
+- scores the generated parse against gold CoNLL-U with **UAS** and **LAS**.
+
+## Expected data format
+
+Each line in every JSONL file must be a JSON object with:
+
+- `text`: the raw sentence
+- `label`: the gold CoNLL-U parse as a newline-separated string
+
+Example:
+
+```json
+{"text": "And he earned 112 points in 1971-1972.", "label": "1 And and CCONJ CC _ 3 cc 3:cc _\n2 he he PRON PRP Case=Nom|Gender=Masc|Number=Sing|Person=3|PronType=Prs 3 nsubj 3:nsubj _\n..."}
+```
+
+## Files
+
+- `ud_conllu_parse.yaml`: task definition
+- `utils.py`: local dataset loader, prompt helpers, and LAS/UAS scorer
+- `run_ud_conllu_eval.sh`: example runner
+
+## Running
+
+```bash
+lm-eval validate --tasks ud_conllu_parse --include_path ./ud_conllu_lm_eval_task
+
+lm-eval run \
+  --model hf \
+  --model_args pretrained=gpt2 \
+  --tasks ud_conllu_parse \
+  --include_path ./ud_conllu_lm_eval_task \
+  --confirm_run_unsafe_code \
+  --log_samples \
+  --output_path ./results/ud_conllu_parse
+```
+
+## Overriding data paths
+
+The YAML already points to the uploaded files in `/mnt/data`, but you can override them:
+
+```bash
+lm-eval run \
+  --model hf \
+  --model_args pretrained=gpt2 \
+  --tasks ud_conllu_parse \
+  --include_path ./ud_conllu_lm_eval_task \
+  --confirm_run_unsafe_code \
+  --metadata '{
+    "train_file": "/path/to/train.jsonl",
+    "dev_file": "/path/to/dev.jsonl",
+    "test_file": "/path/to/test.jsonl"
+  }'
+```
+
+## Notes
+
+- The scorer ignores CoNLL-U comment lines, multiword token rows like `3-4`, and empty nodes like `5.1`.
+- `UAS` checks whether `HEAD` matches.
+- `LAS` checks whether both `HEAD` and `DEPREL` match.
+- Missing or malformed prediction lines count as incorrect attachments.
