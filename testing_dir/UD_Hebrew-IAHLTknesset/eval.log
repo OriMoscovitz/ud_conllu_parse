@@ -1,0 +1,79 @@
+Running the following version of UD tools:
+commit 26e6c87a2f518322d15901a351199b6be6569062
+Author: Dan Zeman <zeman@ufal.mff.cuni.cz>
+Date:   Fri Nov 7 15:39:58 2025 +0100
+Evaluating the following revision of UD_Hebrew-IAHLTknesset:
+commit e17f438ec9bb5d7e628acce6738f43bba5f3ab32
+Merge: b12e803 61fb6bc
+Author: Dan Zeman <zeman@ufal.mff.cuni.cz>
+CoNLL-U data file regular expression = '(.+)-ud-(train|dev|test)\.conllu'
+Language-treebank code (from CoNLL-U file name) = 'he_iahltknesset'
+Language code (from CoNLL-U file name) = 'he'
+Found the following data files: he_iahltknesset-ud-dev.conllu, he_iahltknesset-ud-test.conllu, he_iahltknesset-ud-train.conllu
+Size: counted 67007 of 67007 words (nodes).
+Size: min(0, log((N/1000)**2)) = 8.409594183091.
+Size: maximum value 13.815511 is for 1000000 words or more.
+Split: Found more than 10000 training words.
+Split: Did not find at least 10000 development words.
+Split: Did not find at least 10000 test words.
+Lemmas: source of annotation (from README) factor is 1.
+Universal POS tags: 16 out of 17 found in the corpus.
+Universal POS tags: source of annotation (from README) factor is 1.
+Features: 42790 out of 67007 total words have one or more features.
+Features: source of annotation (from README) factor is 1.
+Universal relations: 35 out of 37 found in the corpus.
+Universal relations: source of annotation (from README) factor is 1.
+Genres: found 2 out of 18 known.
+/net/work/people/zeman/unidep/tools/validate.py --lang he --max-err=10 UD_Hebrew-IAHLTknesset/he_iahltknesset-ud-dev.conllu
+[Line 56 Sent 13_ptm_532410-2]: [L3 Warning pron-det-without-prontype] The word 'שום' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 522 Sent 13_ptm_532410-17]: [L3 Warning pron-det-without-prontype] The word 'שום' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 1009 Sent 13_ptm_532410-32]: [L3 Warning pron-det-without-prontype] The word 'שום' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 1027 Sent 13_ptm_532410-32]: [L3 Warning pron-det-without-prontype] The word 'שום' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 1031 Sent 13_ptm_532410-32]: [L3 Warning pron-det-without-prontype] The word 'שום' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 1080 Sent 13_ptm_532410-34]: [L3 Warning pron-det-without-prontype] The word 'עוד' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 1364 Sent 15_ptv_490826-6]: [L3 Warning pron-det-without-prontype] The word 'עוד' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 1494 Sent 15_ptv_490855-2]: [L3 Warning pron-det-without-prontype] The word 'עוד' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 1543 Sent 15_ptv_490855-4]: [L3 Warning pron-det-without-prontype] The word 'איזה' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 1723 Sent 15_ptv_490855-7]: [L3 Warning pron-det-without-prontype] The word 'שום' is tagged 'DET' but it lacks the 'PronType' feature
+...suppressing further errors regarding Warning
+Warnings: 41
+*** PASSED ***
+/net/work/people/zeman/unidep/tools/validate.py --lang he --max-err=10 UD_Hebrew-IAHLTknesset/he_iahltknesset-ud-test.conllu
+[Line 366 Sent 13_ptm_532411-12]: [L3 Warning pron-det-without-prontype] The word 'איזה' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 499 Sent 13_ptm_532411-16]: [L3 Warning pron-det-without-prontype] The word 'עוד' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 2120 Sent 13_ptm_532411-64]: [L3 Warning pron-det-without-prontype] The word 'שום' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 2284 Sent 13_ptm_532411-68]: [L3 Warning pron-det-without-prontype] The word 'איזה' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 2296 Sent 13_ptm_532411-68]: [L3 Warning pron-det-without-prontype] The word 'שום' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 2309 Sent 13_ptm_532411-68]: [L3 Warning pron-det-without-prontype] The word 'שום' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 2325 Sent 13_ptm_532411-68]: [L3 Warning pron-det-without-prontype] The word 'שום' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 2340 Sent 13_ptm_532411-68]: [L3 Warning pron-det-without-prontype] The word 'שום' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 2421 Sent 13_ptm_532411-71]: [L3 Warning pron-det-without-prontype] The word 'שום' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 2562 Sent 13_ptm_532411-75]: [L3 Warning pron-det-without-prontype] The word 'כמה' is tagged 'DET' but it lacks the 'PronType' feature
+...suppressing further errors regarding Warning
+Warnings: 29
+*** PASSED ***
+/net/work/people/zeman/unidep/tools/validate.py --lang he --max-err=10 UD_Hebrew-IAHLTknesset/he_iahltknesset-ud-train.conllu
+[Line 808 Sent 13_ptm_532409-31]: [L3 Warning pron-det-without-prontype] The word 'שום' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 981 Sent 13_ptm_532409-37]: [L3 Warning pron-det-without-prontype] The word 'איזה' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 2007 Sent 15_ptm_532742-4]: [L3 Warning fixed-without-extpos] Fixed expression 'קודם ל' does not have the 'ExtPos' feature
+[Line 2282 Sent 15_ptm_532742-15]: [L3 Warning pron-det-without-prontype] The word 'מיני' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 2339 Sent 15_ptm_532742-16]: [L3 Warning pron-det-without-prontype] The word 'מיני' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 2351 Sent 15_ptm_532742-17]: [L3 Warning pron-det-without-prontype] The word 'מיני' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 3309 Sent 15_ptm_532742-44]: [L3 Warning pron-det-without-prontype] The word 'מדי' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 3652 Sent 15_ptm_532742-56]: [L3 Warning pron-det-without-prontype] The word 'כמה' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 4073 Sent 15_ptm_532742-66]: [L3 Warning pron-det-without-prontype] The word 'איזה' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 4271 Sent 15_ptm_532742-73]: [L3 Warning pron-det-without-prontype] The word 'שום' is tagged 'DET' but it lacks the 'PronType' feature
+...suppressing further errors regarding Warning
+Warnings: 282
+*** PASSED ***
+Validity: 1
+(weight=0.111111111111111) * (score{features}=1) = 0.111111111111111
+(weight=0.111111111111111) * (score{genres}=0.111111111111111) = 0.0123456790123457
+(weight=0.111111111111111) * (score{lemmas}=1) = 0.111111111111111
+(weight=0.37037037037037) * (score{size}=0.608706724793684) = 0.225446935108772
+(weight=0.0740740740740741) * (score{split}=0.34) = 0.0251851851851852
+(weight=0.111111111111111) * (score{tags}=0.941176470588235) = 0.104575163398693
+(weight=0.111111111111111) * (score{udeprels}=0.945945945945946) = 0.105105105105105
+(TOTAL score=0.694880290032323) * (availability=1) * (validity=1) = 0.694880290032323
+STARS = 3.5
+UD_Hebrew-IAHLTknesset	0.694880290032323	3.5

@@ -1,0 +1,79 @@
+Running the following version of UD tools:
+commit 26e6c87a2f518322d15901a351199b6be6569062
+Author: Dan Zeman <zeman@ufal.mff.cuni.cz>
+Date:   Fri Nov 7 15:39:58 2025 +0100
+Evaluating the following revision of UD_Hebrew-IAHLTwiki:
+commit b5f5274d8d99d51637522228705695bc18a326e7
+Merge: 9b12741 362f46f
+Author: Dan Zeman <zeman@ufal.mff.cuni.cz>
+CoNLL-U data file regular expression = '(.+)-ud-(train|dev|test)\.conllu'
+Language-treebank code (from CoNLL-U file name) = 'he_iahltwiki'
+Language code (from CoNLL-U file name) = 'he'
+Found the following data files: he_iahltwiki-ud-dev.conllu, he_iahltwiki-ud-test.conllu, he_iahltwiki-ud-train.conllu
+Size: counted 140961 of 140961 words (nodes).
+Size: min(0, log((N/1000)**2)) = 9.89696651274766.
+Size: maximum value 13.815511 is for 1000000 words or more.
+Split: Found more than 10000 training words.
+Split: Did not find at least 10000 development words.
+Split: Found at least 10000 test words.
+Lemmas: source of annotation (from README) factor is 1.
+Universal POS tags: 16 out of 17 found in the corpus.
+Universal POS tags: source of annotation (from README) factor is 1.
+Features: 84766 out of 140961 total words have one or more features.
+Features: source of annotation (from README) factor is 1.
+Universal relations: 35 out of 37 found in the corpus.
+Universal relations: source of annotation (from README) factor is 1.
+Genres: found 1 out of 18 known.
+/net/work/people/zeman/unidep/tools/validate.py --lang he --max-err=10 UD_Hebrew-IAHLTwiki/he_iahltwiki-ud-dev.conllu
+[Line 326 Sent iahltwiki_fresh-frozen-plasma-14]: [L3 Warning pron-det-without-prontype] The word 'מספר' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 468 Sent iahltwiki_fresh-frozen-plasma-19]: [L3 Warning pron-det-without-prontype] The word 'מעט' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 1103 Sent iahltwiki_fresh-frozen-plasma-42]: [L3 Warning pron-det-without-prontype] The word 'מדי' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 1115 Sent iahltwiki_fresh-frozen-plasma-43]: [L3 Warning pron-det-without-prontype] The word 'מספר' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 1119 Sent iahltwiki_fresh-frozen-plasma-43]: [L3 Warning obl-should-be-nmod] The parent (node [7] 'גורמים') is a nominal (and not a predicate), hence the relation should be 'nmod', not 'obl'.
+[Line 1459 Sent iahltwiki_fresh-frozen-plasma-53]: [L3 Warning pron-det-without-prontype] The word 'מספר' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 2121 Sent iahltwiki_bird-mosaic-10]: [L3 Warning pron-det-without-prontype] The word 'כמה' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 2691 Sent iahltwiki_bird-mosaic-26]: [L3 Warning pron-det-without-prontype] The word 'רוב' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 3287 Sent iahltwiki_bird-mosaic-42]: [L3 Warning pron-det-without-prontype] The word 'כולו' is tagged 'PRON' but it lacks the 'PronType' feature
+[Line 3483 Sent iahltwiki_bird-mosaic-46]: [L3 Warning pron-det-without-prontype] The word 'שאר' is tagged 'DET' but it lacks the 'PronType' feature
+...suppressing further errors regarding Warning
+Warnings: 37
+*** PASSED ***
+/net/work/people/zeman/unidep/tools/validate.py --lang he --max-err=10 UD_Hebrew-IAHLTwiki/he_iahltwiki-ud-test.conllu
+[Line 565 Sent iahltwiki_dialysis-16]: [L3 Warning pron-det-without-prontype] The word 'מה' is tagged 'PRON' but it lacks the 'PronType' feature
+[Line 779 Sent iahltwiki_dialysis-21]: [L3 Warning pron-det-without-prontype] The word 'כמה' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 928 Sent iahltwiki_dialysis-25]: [L3 Warning pron-det-without-prontype] The word 'מספר' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 1625 Sent iahltwiki_dialysis-57]: [L3 Warning pron-det-without-prontype] The word 'מרבית' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 1663 Sent iahltwiki_dialysis-59]: [L3 Warning pron-det-without-prontype] The word 'מרבית' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 1669 Sent iahltwiki_dialysis-59]: [L3 Warning obl-should-be-nmod] The parent (node [3] 'נזקקים') is a nominal (and not a predicate), hence the relation should be 'nmod', not 'obl'.
+[Line 2287 Sent iahltwiki_unrwa-2]: [L3 Warning pron-det-without-prontype] The word 'כלל' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 2340 Sent iahltwiki_unrwa-3]: [L3 Warning obl-should-be-nmod] The parent (node [11] 'פעם') is a nominal (and not a predicate), hence the relation should be 'nmod', not 'obl'.
+[Line 2945 Sent iahltwiki_unrwa-20]: [L3 Warning pron-det-without-prontype] The word 'כלל' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 3585 Sent iahltwiki_unrwa-40]: [L3 Warning pron-det-without-prontype] The word 'עוד' is tagged 'DET' but it lacks the 'PronType' feature
+...suppressing further errors regarding Warning
+Warnings: 39
+*** PASSED ***
+/net/work/people/zeman/unidep/tools/validate.py --lang he --max-err=10 UD_Hebrew-IAHLTwiki/he_iahltwiki-ud-train.conllu
+[Line 56 Sent iahltwiki_glasgow-coma-scale-2]: [L3 Warning pron-det-without-prontype] The word 'מספר' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 209 Sent iahltwiki_glasgow-coma-scale-6]: [L3 Warning pron-det-without-prontype] The word 'מספר' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 543 Sent iahltwiki_glasgow-coma-scale-20]: [L3 Warning pron-det-without-prontype] The word 'לא' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 903 Sent iahltwiki_glasgow-coma-scale-35]: [L3 Warning pron-det-without-prontype] The word 'מספר' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 1855 Sent iahltwiki_amphetamine-22]: [L3 Warning obl-should-be-nmod] The parent (node [18] 'מרשם') is a nominal (and not a predicate), hence the relation should be 'nmod', not 'obl'.
+[Line 2161 Sent iahltwiki_amphetamine-30]: [L3 Warning pron-det-without-prontype] The word 'כן' is tagged 'PRON' but it lacks the 'PronType' feature
+[Line 2804 Sent iahltwiki_amphetamine-51]: [L3 Warning pron-det-without-prontype] The word 'רוב' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 2905 Sent iahltwiki_amphetamine-54]: [L3 Warning pron-det-without-prontype] The word 'כמה' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 2923 Sent iahltwiki_amphetamine-54]: [L3 Warning pron-det-without-prontype] The word 'כמה' is tagged 'DET' but it lacks the 'PronType' feature
+[Line 3830 Sent iahltwiki_sal-habriut-22]: [L3 Warning pron-det-without-prontype] The word 'עוד' is tagged 'DET' but it lacks the 'PronType' feature
+...suppressing further errors regarding Warning
+Warnings: 362
+*** PASSED ***
+Validity: 1
+(weight=0.111111111111111) * (score{features}=1) = 0.111111111111111
+(weight=0.111111111111111) * (score{genres}=0.0555555555555556) = 0.00617283950617284
+(weight=0.111111111111111) * (score{lemmas}=1) = 0.111111111111111
+(weight=0.37037037037037) * (score{size}=0.716366324011263) = 0.265320860744912
+(weight=0.0740740740740741) * (score{split}=0.67) = 0.0496296296296296
+(weight=0.111111111111111) * (score{tags}=0.941176470588235) = 0.104575163398693
+(weight=0.111111111111111) * (score{udeprels}=0.945945945945946) = 0.105105105105105
+(TOTAL score=0.753025820606735) * (availability=1) * (validity=1) = 0.753025820606735
+STARS = 4
+UD_Hebrew-IAHLTwiki	0.753025820606735	4
