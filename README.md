@@ -52,14 +52,19 @@ pip install -e ".[dev]"
 
 ---
 
-### Option 2 — Automatic Setup (Recommended)
+[//]: # (### Option 2 — Automatic Setup &#40;Still being tested&#41;)
 
-Follow steps 1 and 2 as mentioned above and then run:
+[//]: # ()
+[//]: # (Follow steps 1 and 2 as mentioned above and then run:)
 
-```bash
-chmod +x ud_conllu_parse/setup.sh
-.ud_conllu_parse/setup.sh
-```
+[//]: # ()
+[//]: # (```bash)
+
+[//]: # (chmod +x ud_conllu_parse/setup.sh)
+
+[//]: # (.ud_conllu_parse/setup.sh)
+
+[//]: # (```)
 
 ---
 
