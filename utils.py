@@ -23,8 +23,8 @@ PRED_FILE = f"predictions/preds_{TIMESTAMP}.jsonl"
 
 
 def _read_jsonl(path: str | Path) -> list[dict[str, str]]:
-    # print(f"------------- starting to read from path: {path} -------------")
-    # print(f"------------- current pwd is: {os.getcwd()} -------------")
+    print(f"------------- starting to read from path: {path} -------------")
+    print(f"------------- current pwd is: {os.getcwd()} -------------")
 
     path = Path(path)
 
