@@ -1,0 +1,80 @@
+task: ud_conllu_parse
+task_alias: UD CoNLL-U Parsing (LAS/UAS)
+tag:
+  - dependency_parsing
+  - conllu
+  - generative
+
+dataset_path: json
+output_type: generate_until
+custom_dataset: !function utils.load_local_jsonl_splits
+training_split: train
+validation_split: dev
+test_split: test
+fewshot_split: train
+num_fewshot: 3
+fewshot_config:
+  sampler: first_n
+  split: train
+
+description: |
+  You are a Universal Dependencies parser.
+  Convert each input sentence into CoNLL-U style token lines.
+
+  IMPORTANT:
+  - Split tokens by spaces and punctuation
+  - Punctuation marks are separate tokens
+  - Do not merge or invent tokens
+  - Do not skip tokens
+  - The number of output lines must equal the number of tokens
+  - Generate exactly one line per token
+  - Stop generating after the last token
+  
+  Output Format:
+  Return only the parse with exactly 10 columns per token:
+  ID | FORM | LEMMA | UPOS | XPOS | FEATS | HEAD | DEPREL | DEPS | MISC
+  
+  Formatting Constraints:
+  - No comments
+  - No explanations
+  - No markdown
+  - No blank lines
+  - No extra text
+  - No multi-word token lines
+  - IDs must start at 1 and increment by 1
+  
+  Example:
+  Input:
+  (was that a good thing?)
+  
+  Tokens:
+  ( , was , that , a , good , thing , ? , )
+
+
+doc_to_text: !function utils.doc_to_text
+doc_to_target: !function utils.doc_to_target
+process_results: !function utils.process_results
+
+metric_list:
+  - metric: uas
+    aggregation: mean
+    higher_is_better: true
+  - metric: las
+    aggregation: mean
+    higher_is_better: true
+
+generation_kwargs:
+  until:
+    - "\n\n"
+    - "</s>"
+    - "<|im_end|>"
+    - "<|eot_id|>"
+  do_sample: false
+  temperature: 0.0
+  max_gen_toks: 256
+
+metadata:
+  version: 1.0
+  train_file: /mnt/c/Users/orori/PycharmProjects/statistical-mt-udp-lm-eval-harness-task/data/UD_English-EWT/en_ewt-ud-train_conv.jsonl
+  dev_file: /mnt/c/Users/orori/PycharmProjects/statistical-mt-udp-lm-eval-harness-task/data/UD_English-EWT/en_ewt-ud-dev_conv.jsonl
+  test_file: /mnt/c/Users/orori/PycharmProjects/statistical-mt-udp-lm-eval-harness-task/data/UD_English-EWT/en_ewt-ud-test_conv.jsonl
