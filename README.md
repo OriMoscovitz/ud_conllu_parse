@@ -63,6 +63,12 @@ chmod +x setup.sh
 
 ## Usage
 
+Navigate to the task directory:
+
+```bash
+cd ./lm_eval/tasks/ud_conllu_parse/
+```
+
 Run evaluation with the `Qwen2.5-1.5B-Instruct` model:
 
 ```bash
