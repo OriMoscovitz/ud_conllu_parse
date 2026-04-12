@@ -75,6 +75,6 @@ generation_kwargs:
 
 metadata:
   version: 1.0
-  train_file: /mnt/c/Users/orori/PycharmProjects/statistical-mt-udp-lm-eval-harness-task/data/UD_English-EWT/en_ewt-ud-train_conv.jsonl
-  dev_file: /mnt/c/Users/orori/PycharmProjects/statistical-mt-udp-lm-eval-harness-task/data/UD_English-EWT/en_ewt-ud-dev_conv.jsonl
-  test_file: /mnt/c/Users/orori/PycharmProjects/statistical-mt-udp-lm-eval-harness-task/data/UD_English-EWT/en_ewt-ud-test_conv.jsonl
+  train_file: ./data/UD_English-EWT/en_ewt-ud-train_conv.jsonl
+  dev_file: ./data/UD_English-EWT/en_ewt-ud-dev_conv.jsonl
+  test_file: ./data/UD_English-EWT/en_ewt-ud-test_conv.jsonl

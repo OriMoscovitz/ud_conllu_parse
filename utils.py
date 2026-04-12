@@ -10,9 +10,9 @@ from typing import Any
 from datasets import Dataset
 
 
-DEFAULT_TRAIN_FILE = "/mnt/c/Users/orori/PycharmProjects/statistical-mt-udp-lm-eval-harness-task/data/UD_English-EWT/en_ewt-ud-train_conv.jsonl"
-DEFAULT_DEV_FILE = "/mnt/c/Users/orori/PycharmProjects/statistical-mt-udp-lm-eval-harness-task/data/UD_English-EWT/en_ewt-ud-dev_conv.jsonl"
-DEFAULT_TEST_FILE = "/mnt/c/Users/orori/PycharmProjects/statistical-mt-udp-lm-eval-harness-task/data/UD_English-EWT/en_ewt-ud-test_conv.jsonl"
+DEFAULT_TRAIN_FILE = "./data/UD_English-EWT/en_ewt-ud-train_conv.jsonl"
+DEFAULT_DEV_FILE = "./data/UD_English-EWT/en_ewt-ud-dev_conv.jsonl"
+DEFAULT_TEST_FILE = "./data/UD_English-EWT/en_ewt-ud-test_conv.jsonl"
 
 TIMESTAMP = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 os.makedirs("predictions", exist_ok=True)
@@ -24,7 +24,10 @@ PRED_FILE = f"predictions/preds_{TIMESTAMP}.jsonl"
 
 def _read_jsonl(path: str | Path) -> list[dict[str, str]]:
     # print(f"------------- starting to read from path: {path} -------------")
+    # print(f"------------- current pwd is: {os.getcwd()} -------------")
+
     path = Path(path)
+
     if not path.exists():
         raise FileNotFoundError(f"Dataset file not found: {path}")
 
