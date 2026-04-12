@@ -13,9 +13,6 @@ fi
 echo "Activating virtual environment..."
 source .venv/bin/activate
 
-echo "Cloning UD parsing repository..."
-git clone https://github.com/OriMoscovitz/ud_conllu_parse.git
-
 echo "Installing task dependencies..."
 pip install -r ud_conllu_parse/requirements.txt
 
