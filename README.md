@@ -54,6 +54,8 @@ pip install -e ".[dev]"
 
 ### Option 2 — Automatic Setup (Recommended)
 
+Clone the UD Parsing Task Repository and run:
+
 ```bash
 chmod +x setup.sh
 ./setup.sh
