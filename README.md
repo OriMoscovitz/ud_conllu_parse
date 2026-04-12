@@ -7,6 +7,73 @@ This task adds a generative `lm-eval-harness` benchmark that:
 - prompts the model to convert each sentence into CoNLL-U,
 - scores the generated parse against gold CoNLL-U with **UAS** and **LAS**.
 
+# UD CoNLL-U Parse — Evaluation Guide
+
+## Setup
+
+### 1. Create and Activate a Virtual Environment
+
+```bash
+python -m venv .venv
+source .venv/bin/activate  # Linux / Mac
+# .venv\Scripts\activate   # Windows
+```
+
+### 2. Clone the UD Parsing Task Repository
+
+```bash
+git clone https://github.com/OriMoscovitz/ud_conllu_parse.git
+```
+
+### 3. Install Task Dependencies
+
+```bash
+pip install -r ud_conllu_parse/requirements.txt
+```
+
+### 4. Clone the Evaluation Harness
+
+```bash
+git clone https://github.com/EleutherAI/lm-evaluation-harness.git
+cd lm-evaluation-harness
+```
+
+### 5. Copy the Task into the Harness
+
+```bash
+cp -r ../ud_conllu_parse lm_eval/tasks/
+```
+
+### 6. Install the Evaluation Harness
+
+```bash
+pip install -e ".[dev]"
+```
+
+---
+
+## Usage
+
+Run evaluation with the `Qwen2.5-1.5B-Instruct` model:
+
+```bash
+lm-eval run \
+  --model hf \
+  --model_args pretrained=Qwen/Qwen2.5-1.5B-Instruct,device_map=cuda \
+  --tasks ud_conllu_parse \
+  --include_path . \
+  --confirm_run_unsafe_code \
+  --output_path ./results
+```
+
+## Output
+
+Results will be saved to:
+
+```bash
+./results
+```
+
 ## Expected data format
 
 Each line in every JSONL file must be a JSON object with:
