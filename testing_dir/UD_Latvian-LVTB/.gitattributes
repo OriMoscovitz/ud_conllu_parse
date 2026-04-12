@@ -1,2 +1,0 @@
-# UD conllu files must have LN line endings regardless the OS.
-*.conllu text eol=lf
