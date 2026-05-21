@@ -91,6 +91,20 @@ def convert_all_folders(base_dir: str | Path):
 
 
 def conllu_to_jsonl(input_path, output_path=None):
+    """Convert a CoNLL-U file to JSONL with ^ -delimited 8-column labels.
+
+    Changes vs the original:
+    - Multi-word token lines (ID like "19-20") are skipped — they are surface
+      contractions, not dependency nodes, and confuse the model.
+    - Empty-node lines (ID like "8.1") are skipped for the same reason.
+    - Columns are joined with "^" instead of " " so the model can split them
+      unambiguously (FEATS uses "|" and "="; no UD field ever contains "^",
+      except the ^_^ emoticon which is handled by escaping below).
+    - DEPS (col 9) and MISC (col 10) are dropped — they are not needed for
+      UAS/LAS scoring and only waste context tokens.
+    """
+    COL_SEP = "^"
+
     records = []
 
     with open(input_path, "r", encoding="utf-8") as f:
@@ -105,13 +119,13 @@ def conllu_to_jsonl(input_path, output_path=None):
             label = "\n".join(current_tokens)
             records.append({
                 "text": current_text,
-                "label": label
+                "label": label,
             })
         current_text = None
         current_tokens = []
 
     for line in lines:
-        stripped = line.rstrip("\n")
+        stripped = line.rstrip("\n").rstrip("\r")
 
         if stripped.startswith("# text = "):
             current_text = stripped[len("# text = "):]
@@ -123,7 +137,22 @@ def conllu_to_jsonl(input_path, output_path=None):
             flush()
 
         else:
-            current_tokens.append(stripped.replace("\t", " "))
+            cols = stripped.split("\t")
+            if len(cols) < 8:
+                continue  # malformed line
+
+            tok_id = cols[0]
+
+            # Skip multi-word tokens (e.g. "19-20") and empty nodes (e.g. "8.1")
+            if "-" in tok_id or "." in tok_id:
+                continue
+
+            # Keep only the 8 columns needed: ID FORM LEMMA UPOS XPOS FEATS HEAD DEPREL
+            # Replace any literal "^" inside field values with the fullwidth
+            # lookalike "＾" (U+FF3E) so that plain split("^") is always safe.
+            # This affects only the ^_^ emoticon (4 sentences in EWT train).
+            eight_cols = [c.replace(COL_SEP, "＾") for c in cols[:8]]
+            current_tokens.append(COL_SEP.join(eight_cols))
 
     flush()
 
