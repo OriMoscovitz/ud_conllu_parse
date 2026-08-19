@@ -10,9 +10,9 @@ from typing import Any
 from datasets import Dataset
 
 
-DEFAULT_TRAIN_FILE = "./data/UD_English-EWT/en_ewt-ud-train_conv.jsonl"
-DEFAULT_DEV_FILE = "./data/UD_English-EWT/en_ewt-ud-dev_conv.jsonl"
-DEFAULT_TEST_FILE = "./data/UD_English-EWT/en_ewt-ud-test_conv.jsonl"
+DEFAULT_TRAIN_FILE = "./data/UD_English-EWT/en_ewt-ud-train_conv_min_cols.jsonl"
+DEFAULT_DEV_FILE = "./data/UD_English-EWT/en_ewt-ud-dev_conv_min_cols.jsonl"
+DEFAULT_TEST_FILE = "./data/UD_English-EWT/en_ewt-ud-test_conv_min_cols.jsonl"
 
 TIMESTAMP = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 os.makedirs("predictions", exist_ok=True)
@@ -72,7 +72,7 @@ def doc_to_text(doc: dict[str, str]) -> str:
     # re-tokenization of the raw sentence string which can differ significantly
     # (e.g. "Al-Zaman" is 3 gold tokens: Al, -, Zaman).
     gold_forms = [
-        re.split(r"(?<!\\)\^", row)[1]
+        row.split("^")[1]
         for row in doc["label"].split("\n")
         if row.strip()
     ]
@@ -96,10 +96,8 @@ def _parse_conllu(text: str) -> dict[int, tuple[str, str]]:
 
     Format produced by the converter:
       ID^FORM^LEMMA^UPOS^XPOS^FEATS^HEAD^DEPREL
-    Literal "^" inside field values is escaped as "\\^" by the converter, so
-    we split on unescaped "^" only (negative lookbehind).
-    Multiword tokens and empty nodes are never present in the converted files
-    but the ID guard is kept for safety.
+    Any literal "^" in field values is replaced by the fullwidth lookalike
+    "＾" (U+FF3E) at conversion time, so a plain split("^") is always safe.
     """
     parsed: dict[int, tuple[str, str]] = {}
     for raw_line in _strip_wrappers(text).splitlines():
@@ -107,7 +105,7 @@ def _parse_conllu(text: str) -> dict[int, tuple[str, str]]:
         if not line or line.startswith("#"):
             continue
 
-        cols = re.split(r"(?<!\\)\^", line)
+        cols = line.split("^")
         if len(cols) < 8:
             continue
 
