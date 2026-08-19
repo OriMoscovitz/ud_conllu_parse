@@ -16,14 +16,14 @@ def conllu_to_json(conllu_path: Path, output_path: Path):
                     {
                         "id": token["id"],
                         "form": token["form"],
-                        "lemma": token.get("lemma"),
+                        # "lemma": token.get("lemma"),
                         "upos": token.get("upos"),
-                        "xpos": token.get("xpos"),
+                        # "xpos": token.get("xpos"),
                         "head": token.get("head"),
                         "deprel": token.get("deprel"),
-                        "feats": token.get("feats"),
-                        "deps": token.get("deps"),
-                        "misc": token.get("misc"),
+                        # "feats": token.get("feats"),
+                        # "deps": token.get("deps"),
+                        # "misc": token.get("misc"),
                     }
                     for token in tokenlist
                 ]
@@ -166,11 +166,14 @@ def conllu_to_jsonl(input_path, output_path=None):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python script.py input.conllu [output.jsonl]")
-        sys.exit(1)
+    # if len(sys.argv) < 2:
+    #     print("Usage: python script.py input.conllu [output.jsonl]")
+    #     sys.exit(1)
 
-    input_file = sys.argv[1]
-    output_file = sys.argv[2] if len(sys.argv) > 2 else None
+    # input_file = sys.argv[1]
+    # output_file = sys.argv[2] if len(sys.argv) > 2 else None
+
+    input_file = r"data\UD_English-EWT\en_ewt-ud-train.conllu"
+    output_file = r"data\UD_English-EWT\en_ewt-ud-train_testing_conversion.jsonl"
 
     conllu_to_jsonl(input_file, output_file)
