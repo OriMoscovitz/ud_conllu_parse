@@ -10,9 +10,9 @@ from typing import Any
 from datasets import Dataset
 
 
-DEFAULT_TRAIN_FILE = "./data/UD_English-EWT/en_ewt-ud-train_conv2.jsonl"
-DEFAULT_DEV_FILE = "./data/UD_English-EWT/en_ewt-ud-dev_conv2.jsonl"
-DEFAULT_TEST_FILE = "./data/UD_English-EWT/en_ewt-ud-test_conv2.jsonl"
+DEFAULT_TRAIN_FILE = "./data/UD_English-EWT/en_ewt-ud-train_conv_min_cols.jsonl"
+DEFAULT_DEV_FILE = "./data/UD_English-EWT/en_ewt-ud-dev_conv_min_cols.jsonl"
+DEFAULT_TEST_FILE = "./data/UD_English-EWT/en_ewt-ud-test_conv_min_cols.jsonl"
 
 TIMESTAMP = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 os.makedirs("predictions", exist_ok=True)
@@ -162,3 +162,5 @@ def process_results(doc: dict[str, str], results: list[str]) -> dict[str, float]
         f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
     return {"uas": uas, "las": las}
+
+
