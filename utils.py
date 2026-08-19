@@ -67,8 +67,17 @@ def load_local_jsonl_splits(
 
 def doc_to_text(doc: dict[str, str]) -> str:
     sentence = doc["text"].strip()
-    tokens = sentence.split()
-    return f"Sentence: {sentence}\nTokens: {len(tokens)}\nCoNLL-U:\n"
+    # Extract gold token forms from the label (col 1 in ^-delimited rows),
+    # so the model sees the exact tokenization it must reproduce — not a
+    # re-tokenization of the raw sentence string which can differ significantly
+    # (e.g. "Al-Zaman" is 3 gold tokens: Al, -, Zaman).
+    gold_forms = [
+        re.split(r"(?<!\\)\^", row)[1]
+        for row in doc["label"].split("\n")
+        if row.strip()
+    ]
+    token_str = " ".join(f"{i+1}={form}" for i, form in enumerate(gold_forms))
+    return f"Sentence: {sentence}\nTokens: {token_str}\nParse:\n"
 
 
 def doc_to_target(doc: dict[str, str]) -> str:
@@ -83,11 +92,14 @@ def _strip_wrappers(text: str) -> str:
 
 
 def _parse_conllu(text: str) -> dict[int, tuple[str, str]]:
-    """Parse CoNLL-U-ish token lines into {id: (head, deprel)}.
+    """Parse ^-delimited 8-column token lines into {id: (head, deprel)}.
 
-    The gold data is whitespace-separated rather than tab-separated, so we split
-    on arbitrary whitespace with maxsplit=9 to preserve the 10 CoNLL-U columns.
-    Multiword tokens and empty nodes are ignored for attachment scoring.
+    Format produced by the converter:
+      ID^FORM^LEMMA^UPOS^XPOS^FEATS^HEAD^DEPREL
+    Literal "^" inside field values is escaped as "\\^" by the converter, so
+    we split on unescaped "^" only (negative lookbehind).
+    Multiword tokens and empty nodes are never present in the converted files
+    but the ID guard is kept for safety.
     """
     parsed: dict[int, tuple[str, str]] = {}
     for raw_line in _strip_wrappers(text).splitlines():
@@ -95,7 +107,7 @@ def _parse_conllu(text: str) -> dict[int, tuple[str, str]]:
         if not line or line.startswith("#"):
             continue
 
-        cols = re.split(r"\s+", line, maxsplit=9)
+        cols = re.split(r"(?<!\\)\^", line)
         if len(cols) < 8:
             continue
 
