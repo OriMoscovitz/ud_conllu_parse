@@ -1,10 +1,9 @@
 task: ud_conllu_parse
-task_alias: UD CoNLL-U Parsing (LAS/UAS)
+task_alias: UD CoNLL-U Parsing (LAS/UAS + validity)
 tag:
   - dependency_parsing
   - conllu
   - generative
-
 dataset_path: json
 output_type: generate_until
 custom_dataset: !function utils.load_local_jsonl_splits
@@ -18,18 +17,33 @@ fewshot_config:
   split: train
 
 description: |
-  You are a Universal Dependencies parser.
-  For each sentence you will be given the exact token list with IDs.
-  Output exactly one line per token, in this format:
-  ID^FORM^LEMMA^UPOS^XPOS^FEATS^HEAD^DEPREL
+  Convert each input sentence into CoNLL-U style token lines.
 
-  Rules:
-  - Use "^" as the column separator.
-  - Output exactly the tokens listed, in the same order, with the same IDs.
-  - Do not add, skip, merge, or reorder tokens.
-  - HEAD is the integer ID of the governing token (0 for root).
-  - FEATS uses "=" and "|" internally (e.g. Number=Sing|Person=3); never use "^" inside a field.
-  - Output one line per token, no blank lines, no comments, no extra text.
+  IMPORTANT:
+  - Split tokens by spaces and punctuation
+  - Punctuation marks are separate tokens
+  - Do not merge or invent tokens
+  - Do not skip tokens
+  - The number of output lines must equal the number of tokens
+  - Generate exactly one line per token
+  - Stop generating after the last token
+  
+  Output Format:
+  Return exactly one line per token using exactly 8 fields separated by ^:
+  
+  ID^FORM^LEMMA^UPOS^XPOS^FEATS^HEAD^DEPREL
+  
+  Example row:
+  1^Google^Google^PROPN^NNP^Number=Sing^2^nsubj
+  
+  Formatting Constraints:
+  - No comments
+  - No explanations
+  - No markdown
+  - No blank lines
+  - No extra text
+  - No multi-word token lines
+  - IDs must start at 1 and increment by 1
 
 
 doc_to_text: !function utils.doc_to_text
@@ -40,12 +54,26 @@ metric_list:
   - metric: uas
     aggregation: mean
     higher_is_better: true
+
   - metric: las
     aggregation: mean
     higher_is_better: true
 
+  - metric: conllu_invalid_rate
+    aggregation: mean
+    higher_is_better: false
+
+  - metric: conllu_valid_rate
+    aggregation: mean
+    higher_is_better: true
+
+  - metric: conllu_invalid_count
+    aggregation: !function utils.sum_metric
+    higher_is_better: false
+
 generation_kwargs:
   until:
+    - "\n\n"
     - "</s>"
     - "<|im_end|>"
     - "<|eot_id|>"
@@ -54,8 +82,7 @@ generation_kwargs:
   max_gen_toks: 1024
 
 metadata:
-  version: 1.0
+  version: 1.2
   train_file: ./data/UD_English-EWT/en_ewt-ud-train_conv2.jsonl
   dev_file: ./data/UD_English-EWT/en_ewt-ud-dev_conv2.jsonl
   test_file: ./data/UD_English-EWT/en_ewt-ud-test_conv2.jsonl
-
