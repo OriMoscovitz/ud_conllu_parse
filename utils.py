@@ -65,10 +65,23 @@ def load_local_jsonl_splits(
     }
 
 
+# correcting the parsing of the label, so it will treat punctuation as a token as well
 def doc_to_text(doc: dict[str, str]) -> str:
     sentence = doc["text"].strip()
-    tokens = sentence.split()
-    return f"Sentence: {sentence}\nTokens: {len(tokens)}\nCoNLL-U:\n"
+
+    forms = []
+    for line in doc["label"].splitlines():
+        cols = line.split("^")
+        if len(cols) >= 2:
+            forms.append(cols[1])
+
+    token_list = " | ".join(forms)
+
+    return (
+        f"Sentence: {sentence}\n"
+        f"Tokens ({len(forms)}): {token_list}\n"
+        f"CoNLL-U:\n"
+    )
 
 
 def doc_to_target(doc: dict[str, str]) -> str:
