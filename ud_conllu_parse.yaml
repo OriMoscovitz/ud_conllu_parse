@@ -20,21 +20,19 @@ description: |
   Convert each input sentence into CoNLL-U style token lines.
 
   IMPORTANT:
-  - Split tokens by spaces and punctuation
-  - Punctuation marks are separate tokens
-  - Do not merge or invent tokens
-  - Do not skip tokens
-  - The number of output lines must equal the number of tokens
+  - Use exactly the provided tokens, in exactly the provided order
+  - Do not merge, split, invent, or skip tokens
+  - The number of output lines must equal the number of provided tokens
   - Generate exactly one line per token
   - Stop generating after the last token
   
   Output Format:
-  Return exactly one line per token using exactly 8 fields separated by ^:
+  Return exactly one line per token using exactly 4 fields separated by ^:
   
-  ID^FORM^LEMMA^UPOS^XPOS^FEATS^HEAD^DEPREL
+  ID^FORM^HEAD^DEPREL
   
   Example row:
-  1^Google^Google^PROPN^NNP^Number=Sing^2^nsubj
+  1^Google^2^nsubj
   
   Formatting Constraints:
   - No comments
@@ -44,6 +42,11 @@ description: |
   - No extra text
   - No multi-word token lines
   - IDs must start at 1 and increment by 1
+  - Exactly one token must have HEAD=0
+  - That token must have DEPREL=root
+  - Every other token must point to another token ID
+  - No token may point to itself
+  - The dependency structure must not contain cycles
 
 
 doc_to_text: !function utils.doc_to_text
@@ -59,17 +62,17 @@ metric_list:
     aggregation: mean
     higher_is_better: true
 
-  - metric: conllu_invalid_rate
-    aggregation: mean
-    higher_is_better: false
+#  - metric: conllu_invalid_rate
+#    aggregation: mean
+#    higher_is_better: false
 
   - metric: conllu_valid_rate
     aggregation: mean
     higher_is_better: true
 
-  - metric: conllu_invalid_count
-    aggregation: !function utils.sum_metric
-    higher_is_better: false
+#  - metric: conllu_invalid_count
+#    aggregation: !function utils.sum_metric
+#    higher_is_better: false
 
 generation_kwargs:
   until:
@@ -82,7 +85,7 @@ generation_kwargs:
   max_gen_toks: 1024
 
 metadata:
-  version: 1.2
+  version: 1.5
   train_file: ./data/UD_English-EWT/en_ewt-ud-train_conv2.jsonl
   dev_file: ./data/UD_English-EWT/en_ewt-ud-dev_conv2.jsonl
   test_file: ./data/UD_English-EWT/en_ewt-ud-test_conv2.jsonl
