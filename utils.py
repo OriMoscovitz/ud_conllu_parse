@@ -83,9 +83,27 @@ def doc_to_text(doc: dict[str, str]) -> str:
         f"CoNLL-U:\n"
     )
 
+# def doc_to_target(doc: dict[str, str]) -> str:
+#     return doc["label"].strip()
 
+# changed to focus on the columns ID^FORM^HEAD^DEPREL only
 def doc_to_target(doc: dict[str, str]) -> str:
-    return doc["label"].strip()
+    rows = []
+
+    for raw_line in doc["label"].splitlines():
+        cols = raw_line.split("^")
+
+        if len(cols) != 8:
+            continue
+
+        token_id = cols[0]
+        form = cols[1]
+        head = cols[6]
+        deprel = cols[7]
+
+        rows.append(f"{token_id}^{form}^{head}^{deprel}")
+
+    return "\n".join(rows)
 
 
 def _strip_wrappers(text: str) -> str:
@@ -262,10 +280,10 @@ def _has_valid_dependency_tree(
 def is_valid_conllu_prediction(gold: str, prediction: str) -> bool:
     """Validate a generated dependency parse.
 
-    The task generates an 8-column '^'-delimited projection of basic
+    The task generates an 4-column '^'-delimited projection of basic
     CoNLL-U:
-
-        ID^FORM^LEMMA^UPOS^XPOS^FEATS^HEAD^DEPREL
+        ID^FORM^HEAD^DEPREL
+        # before: ID^FORM^LEMMA^UPOS^XPOS^FEATS^HEAD^DEPREL
 
     DEPS and MISC are omitted by design and can be reconstructed as '_'.
 
@@ -307,9 +325,16 @@ def is_valid_conllu_prediction(gold: str, prediction: str) -> bool:
 
             cols = raw_line.split("^")
 
-            # The generated task representation has exactly eight columns.
-            if len(cols) != 8:
+            if len(cols) != 4:
                 return False
+
+            token_id, form, head, deprel = cols
+
+
+
+            # # The generated task representation has exactly eight columns.
+            # if len(cols) != 8:
+            #     return False
 
             if any(col == "" for col in cols):
                 return False
@@ -318,16 +343,16 @@ def is_valid_conllu_prediction(gold: str, prediction: str) -> bool:
             if any("\t" in col for col in cols):
                 return False
 
-            (
-                token_id,
-                form,
-                lemma,
-                upos,
-                xpos,
-                feats,
-                head,
-                deprel,
-            ) = cols
+            # (
+            #     token_id,
+            #     form,
+            #     lemma,
+            #     upos,
+            #     xpos,
+            #     feats,
+            #     head,
+            #     deprel,
+            # ) = cols
 
             # In the task representation all rows are ordinary word rows.
             if not token_id.isdigit():
@@ -340,18 +365,25 @@ def is_valid_conllu_prediction(gold: str, prediction: str) -> bool:
 
             ids.append(idx)
 
-            # CoNLL-U fields other than FORM/LEMMA/MISC may not contain spaces.
-            for value in (token_id, upos, xpos, feats, head, deprel):
+            # # CoNLL-U fields other than FORM/LEMMA/MISC may not contain spaces.
+            # for value in (token_id, upos, xpos, feats, head, deprel):
+            #     if any(char.isspace() for char in value):
+            #         return False
+
+            for value in (token_id, head, deprel):
                 if any(char.isspace() for char in value):
                     return False
 
             # FORM and LEMMA still may not contain tabs/newlines or be empty.
-            if not form or not lemma:
+            # if not form or not lemma:
+            #     return False
+
+            if not form:
                 return False
 
-            # Basic UD word rows require UPOS, HEAD and DEPREL.
-            if upos == "_" or upos not in UD_UPOS:
-                return False
+            # # Basic UD word rows require UPOS, HEAD and DEPREL.
+            # if upos == "_" or upos not in UD_UPOS:
+            #     return False
 
             if head == "_" or not head.isdigit():
                 return False
@@ -369,8 +401,8 @@ def is_valid_conllu_prediction(gold: str, prediction: str) -> bool:
             if base_deprel not in UD_DEPRELS:
                 return False
 
-            if not _valid_feats(feats):
-                return False
+            # if not _valid_feats(feats):
+            #     return False
 
             heads[idx] = head_id
             deprels[idx] = deprel
@@ -412,7 +444,7 @@ def _parse_conllu(text: str) -> dict[int, tuple[str, str]]:
 
         cols = line.split("^")
 
-        if len(cols) != 8:
+        if len(cols) != 4:
             continue
 
         tok_id = cols[0]
@@ -425,8 +457,8 @@ def _parse_conllu(text: str) -> dict[int, tuple[str, str]]:
         except ValueError:
             continue
 
-        head = cols[6]
-        deprel = cols[7]
+        head = cols[2]
+        deprel = cols[3]
         parsed[idx] = (head, deprel)
 
     return parsed
@@ -456,7 +488,11 @@ def _attachment_scores(gold: str, pred: str) -> tuple[float, float]:
 def process_results(doc: dict[str, str], results: list[str]) -> dict[str, float]:
     pred = results[0] if results else ""
 
-    uas, las = _attachment_scores(doc["label"], pred)
+    # for 8 columns
+    # uas, las = _attachment_scores(doc["label"], pred)
+
+    # fixed to fit 4 columns
+    uas, las = _attachment_scores(doc_to_target(doc), pred)
 
     is_valid = is_valid_conllu_prediction(doc["label"], pred)
 
@@ -465,7 +501,8 @@ def process_results(doc: dict[str, str], results: list[str]) -> dict[str, float]
 
     record = {
         "text": doc["text"],
-        "gold": doc["label"],
+        # "gold": doc["label"],
+        "gold": doc_to_target(doc),
         "prediction": pred,
         "uas": uas,
         "las": las,
@@ -478,7 +515,7 @@ def process_results(doc: dict[str, str], results: list[str]) -> dict[str, float]
     return {
         "uas": uas,
         "las": las,
-        "conllu_invalid_rate": invalid,
+        # "conllu_invalid_rate": invalid,
         "conllu_valid_rate": valid,
-        "conllu_invalid_count": invalid,
+        # "conllu_invalid_count": invalid,
     }
