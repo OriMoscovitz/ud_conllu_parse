@@ -1,118 +1,64 @@
 from __future__ import annotations
 
 import datetime
+import importlib.util
 import json
 import os
 import re
+import subprocess
 from pathlib import Path
 from typing import Any
 
 from datasets import Dataset
 
+def _load_local_module(module_name: str, filename: str):
+    """
+    Load a Python module from the same directory as this utils.py file.
 
-DEFAULT_TRAIN_FILE = "./data/UD_English-EWT/en_ewt-ud-train_conv.jsonl"
-DEFAULT_DEV_FILE = "./data/UD_English-EWT/en_ewt-ud-dev_conv.jsonl"
-DEFAULT_TEST_FILE = "./data/UD_English-EWT/en_ewt-ud-test_conv.jsonl"
+    lm-eval loads utils.py as a standalone module rather than as part of a
+    Python package, so normal relative imports such as:
+
+        from .preprocessing import ...
+        from .language_map import ...
+
+    are not available.
+
+    This helper explicitly loads sibling modules by their file path.
+    """
+    module_path = Path(__file__).with_name(filename)
+
+    spec = importlib.util.spec_from_file_location(
+        module_name,
+        module_path,
+    )
+
+    if spec is None or spec.loader is None:
+        raise ImportError(
+            f"Could not load module '{module_name}' from {module_path}"
+        )
+
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    return module
+
+_preprocessing = _load_local_module("ud_preprocessing","preprocessing.py",)
+_language_map = _load_local_module("ud_language_map","language_map.py",)
+
+# Functions used from preprocessing.py
+conllu_to_records = _preprocessing.conllu_to_records
+conllu_files_to_records = _preprocessing.conllu_files_to_records
+
+# Functions used from language_map.py
+get_language = _language_map.get_language
+get_repo_url = _language_map.get_repo_url
 
 TIMESTAMP = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 os.makedirs("predictions", exist_ok=True)
 PRED_FILE = f"predictions/preds_{TIMESTAMP}.jsonl"
 
 
-# print(f"------------- default train file set: {DEFAULT_TRAIN_FILE} -------------")
-
-
-def _read_jsonl(path: str | Path) -> list[dict[str, str]]:
-    # print(f"------------- starting to read from path: {path} -------------")
-    # print(f"------------- current pwd is: {os.getcwd()} -------------")
-
-    path = Path(path)
-
-    if not path.exists():
-        raise FileNotFoundError(f"Dataset file not found: {path}")
-
-    records: list[dict[str, str]] = []
-    with path.open("r", encoding="utf-8") as f:
-        for line_no, line in enumerate(f, start=1):
-            line = line.strip()
-            if not line:
-                continue
-            obj = json.loads(line)
-            if "text" not in obj or "label" not in obj:
-                raise ValueError(
-                    f"Expected keys 'text' and 'label' in {path} line {line_no}, got: {list(obj.keys())}"
-                )
-            records.append({"text": str(obj["text"]), "label": str(obj["label"])})
-    return records
-
-
-def load_local_jsonl_splits(
-    train_file: str = DEFAULT_TRAIN_FILE,
-    dev_file: str = DEFAULT_DEV_FILE,
-    test_file: str = DEFAULT_TEST_FILE,
-    **_: Any,
-) -> dict[str, Dataset]:
-    """Load local JSONL files into lm-eval-harness splits.
-
-    The harness passes YAML `metadata` and `dataset_kwargs` into `custom_dataset`.
-    This function intentionally accepts arbitrary keyword args so paths can be
-    overridden via `--metadata` without breaking the call signature.
-    """
-    return {
-        "train": Dataset.from_list(_read_jsonl(train_file)),
-        "dev": Dataset.from_list(_read_jsonl(dev_file)),
-        "test": Dataset.from_list(_read_jsonl(test_file)),
-    }
-
-
-# correcting the parsing of the label, so it will treat punctuation as a token as well
-def doc_to_text(doc: dict[str, str]) -> str:
-    sentence = doc["text"].strip()
-
-    forms = []
-    for line in doc["label"].splitlines():
-        cols = line.split("^")
-        if len(cols) >= 2:
-            forms.append(cols[1])
-
-    token_list = " | ".join(forms)
-
-    return (
-        f"Sentence: {sentence}\n"
-        f"Tokens ({len(forms)}): {token_list}\n"
-        f"CoNLL-U:\n"
-    )
-
-# def doc_to_target(doc: dict[str, str]) -> str:
-#     return doc["label"].strip()
-
-# changed to focus on the columns ID^FORM^HEAD^DEPREL only
-def doc_to_target(doc: dict[str, str]) -> str:
-    rows = []
-
-    for raw_line in doc["label"].splitlines():
-        cols = raw_line.split("^")
-
-        if len(cols) != 8:
-            continue
-
-        token_id = cols[0]
-        form = cols[1]
-        head = cols[6]
-        deprel = cols[7]
-
-        rows.append(f"{token_id}^{form}^{head}^{deprel}")
-
-    return "\n".join(rows)
-
-
-def _strip_wrappers(text: str) -> str:
-    text = text.strip()
-    text = re.sub(r"^```(?:conllu|txt)?\s*", "", text, flags=re.IGNORECASE)
-    text = re.sub(r"\s*```$", "", text)
-    return text.strip()
-
-
+### DEFINITIONS
 UD_UPOS = {
     "ADJ",
     "ADP",
@@ -179,6 +125,221 @@ _FEAT_RE = re.compile(
     r"=[^|=\s]+(?:,[^|=\s]+)*$"
 )
 
+### Downloading the relevant dataset
+DATA_DIR = Path("./data")
+
+def ensure_ud_treebank(language_code: str) -> Path:
+    """
+    Ensure that the Universal Dependencies treebank for the requested
+    language exists locally.
+
+    If it is missing, clone it from GitHub.
+
+    Returns:
+        Path to the local UD repository.
+    """
+
+    config = get_language(language_code)
+
+    repo_name = config["repo"]
+    repo_url = get_repo_url(language_code)
+
+    local_path = DATA_DIR / repo_name
+
+    # Already downloaded
+    if local_path.exists():
+        return local_path
+
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+    print(
+        f"UD treebank for {language_code} not found locally.\n"
+        f"Downloading {repo_name}..."
+    )
+
+    try:
+        subprocess.run(
+            [
+                "git",
+                "clone",
+                "--depth",
+                "1",
+                repo_url,
+                str(local_path),
+            ],
+            check=True,
+        )
+
+    except subprocess.CalledProcessError as exc:
+        raise RuntimeError(
+            f"Failed to download UD repository:\n"
+            f"{repo_url}"
+        ) from exc
+
+    return local_path
+
+def find_ud_split_files(treebank_path: str | Path) -> dict[str, list[Path]]:
+    """
+    Find all CoNLL-U files belonging to train/dev/test splits.
+
+    Supports both normal UD repositories:
+
+        xx_treebank-ud-train.conllu
+        xx_treebank-ud-dev.conllu
+        xx_treebank-ud-test.conllu
+
+    and large repositories whose training split is divided across files:
+
+        xx_treebank-ud-train-a-1.conllu
+        xx_treebank-ud-train-a-2.conllu
+        ...
+    """
+
+    treebank_path = Path(treebank_path)
+
+    if not treebank_path.exists():
+        raise FileNotFoundError(
+            f"UD treebank directory not found: {treebank_path}"
+        )
+
+    splits = {
+        "train": [],
+        "dev": [],
+        "test": [],
+    }
+
+    for conllu_file in treebank_path.glob("*.conllu"):
+        name = conllu_file.name.lower()
+
+        if "-ud-train" in name:
+            splits["train"].append(conllu_file)
+
+        elif "-ud-dev" in name:
+            splits["dev"].append(conllu_file)
+
+        elif "-ud-test" in name:
+            splits["test"].append(conllu_file)
+
+    # Important for split datasets such as German HDT:
+    # train-a-1, train-a-2, train-b-1, train-b-2
+    for split in splits:
+        splits[split].sort()
+
+    return splits
+
+def load_ud_language(language: str, **_,) -> dict[str, Dataset]:
+    """
+    Download the mapped UD treebank if needed,
+    discover its splits,
+    preprocess the CoNLL-U files,
+    and return lm-eval datasets.
+    """
+
+    treebank_path = ensure_ud_treebank(language)
+
+    split_files = find_ud_split_files(treebank_path)
+
+    print(f"Language: {language}")
+    print(f"Treebank: {treebank_path}")
+
+    for split_name, files in split_files.items():
+        print(f"{split_name}: {files}")
+
+    datasets = {}
+
+    for split_name, files in split_files.items():
+        if not files:
+            continue
+
+        records = conllu_files_to_records(files)
+
+        datasets[split_name] = Dataset.from_list(records)
+
+    return datasets
+
+def _read_jsonl(path: str | Path) -> list[dict[str, str]]:
+    # print(f"------------- starting to read from path: {path} -------------")
+    # print(f"------------- current pwd is: {os.getcwd()} -------------")
+
+    path = Path(path)
+
+    if not path.exists():
+        raise FileNotFoundError(f"Dataset file not found: {path}")
+
+    records: list[dict[str, str]] = []
+    with path.open("r", encoding="utf-8") as f:
+        for line_no, line in enumerate(f, start=1):
+            line = line.strip()
+            if not line:
+                continue
+            obj = json.loads(line)
+            if "text" not in obj or "label" not in obj:
+                raise ValueError(
+                    f"Expected keys 'text' and 'label' in {path} line {line_no}, got: {list(obj.keys())}"
+                )
+            records.append({"text": str(obj["text"]), "label": str(obj["label"])})
+    return records
+
+def load_conllu_splits(train_file: str, dev_file: str, test_file: str, **_: Any,) -> dict[str, Dataset]:
+
+    return {
+        "train": Dataset.from_list(
+            conllu_to_records(train_file)
+        ),
+        "dev": Dataset.from_list(
+            conllu_to_records(dev_file)
+        ),
+        "test": Dataset.from_list(
+            conllu_to_records(test_file)
+        ),
+    }
+
+# correcting the parsing of the label, so it will treat punctuation as a token as well
+def doc_to_text(doc: dict[str, str]) -> str:
+    sentence = doc["text"].strip()
+
+    forms = []
+    for line in doc["label"].splitlines():
+        cols = line.split("^")
+        if len(cols) >= 2:
+            forms.append(cols[1])
+
+    token_list = " | ".join(forms)
+
+    return (
+        f"Sentence: {sentence}\n"
+        f"Tokens ({len(forms)}): {token_list}\n"
+        f"CoNLL-U:\n"
+    )
+
+# 8 column version
+def doc_to_target(doc: dict[str, str]) -> str:
+    return doc["label"].strip()
+
+# # changed to focus on the columns ID^FORM^HEAD^DEPREL only
+# def doc_to_target(doc: dict[str, str]) -> str:
+#     rows = []
+#
+#     for raw_line in doc["label"].splitlines():
+#         cols = raw_line.split("^")
+#
+#         if len(cols) != 8:
+#             continue
+#
+#         token_id = cols[0]
+#         form = cols[1]
+#         head = cols[6]
+#         deprel = cols[7]
+#
+#         rows.append(f"{token_id}^{form}^{head}^{deprel}")
+#
+#     return "\n".join(rows)
+
+def _strip_wrappers(text: str) -> str:
+    text = text.strip()
+    text = re.sub(r"^```(?:conllu|txt)?\s*", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\s*```$", "", text)
+    return text.strip()
 
 def _expected_word_ids(gold: str) -> list[int]:
     """Return the integer word IDs expected by the evaluation example."""
@@ -207,7 +368,6 @@ def _expected_word_ids(gold: str) -> list[int]:
 
     return ids
 
-
 def _valid_feats(value: str) -> bool:
     """Check basic CoNLL-U FEATS field syntax."""
     if value == "_":
@@ -220,12 +380,7 @@ def _valid_feats(value: str) -> bool:
 
     return all(_FEAT_RE.fullmatch(part) is not None for part in parts)
 
-
-def _has_valid_dependency_tree(
-    ids: list[int],
-    heads: dict[int, int],
-    deprels: dict[int, str],
-) -> bool:
+def _has_valid_dependency_tree(ids: list[int], heads: dict[int, int], deprels: dict[int, str],) -> bool:
     """Check that HEAD/DEPREL define one rooted, acyclic dependency tree."""
     id_set = set(ids)
 
@@ -276,14 +431,24 @@ def _has_valid_dependency_tree(
 
     return True
 
+# # function that selects specific example indices to provide to the prompt
+# def selected_fewshot_samples() -> list[dict[str, str]]:
+#     records = _read_jsonl(DEFAULT_TRAIN_FILE)
+#
+#     selected_indices = [6, 13, 20, 27, 32]
+#
+#     for i in selected_indices:
+#         print(i, records[i]["text"])
+#
+#     return [records[i] for i in selected_indices]
 
 def is_valid_conllu_prediction(gold: str, prediction: str) -> bool:
     """Validate a generated dependency parse.
 
-    The task generates an 4-column '^'-delimited projection of basic
+    The task generates an 8-column '^'-delimited projection of basic
     CoNLL-U:
-        ID^FORM^HEAD^DEPREL
-        # before: ID^FORM^LEMMA^UPOS^XPOS^FEATS^HEAD^DEPREL
+        # reverting from: ID^FORM^HEAD^DEPREL
+        ID^FORM^LEMMA^UPOS^XPOS^FEATS^HEAD^DEPREL
 
     DEPS and MISC are omitted by design and can be reconstructed as '_'.
 
@@ -325,16 +490,14 @@ def is_valid_conllu_prediction(gold: str, prediction: str) -> bool:
 
             cols = raw_line.split("^")
 
-            if len(cols) != 4:
-                return False
-
-            token_id, form, head, deprel = cols
-
-
-
-            # # The generated task representation has exactly eight columns.
-            # if len(cols) != 8:
+            # if len(cols) != 4:
             #     return False
+            #
+            # token_id, form, head, deprel = cols
+
+            # The generated task representation has exactly eight columns.
+            if len(cols) != 8:
+                return False
 
             if any(col == "" for col in cols):
                 return False
@@ -343,16 +506,16 @@ def is_valid_conllu_prediction(gold: str, prediction: str) -> bool:
             if any("\t" in col for col in cols):
                 return False
 
-            # (
-            #     token_id,
-            #     form,
-            #     lemma,
-            #     upos,
-            #     xpos,
-            #     feats,
-            #     head,
-            #     deprel,
-            # ) = cols
+            (
+                token_id,
+                form,
+                lemma,
+                upos,
+                xpos,
+                feats,
+                head,
+                deprel,
+            ) = cols
 
             # In the task representation all rows are ordinary word rows.
             if not token_id.isdigit():
@@ -365,25 +528,25 @@ def is_valid_conllu_prediction(gold: str, prediction: str) -> bool:
 
             ids.append(idx)
 
-            # # CoNLL-U fields other than FORM/LEMMA/MISC may not contain spaces.
-            # for value in (token_id, upos, xpos, feats, head, deprel):
-            #     if any(char.isspace() for char in value):
-            #         return False
-
-            for value in (token_id, head, deprel):
+            # CoNLL-U fields other than FORM/LEMMA/MISC may not contain spaces.
+            for value in (token_id, upos, xpos, feats, head, deprel):
                 if any(char.isspace() for char in value):
                     return False
 
-            # FORM and LEMMA still may not contain tabs/newlines or be empty.
-            # if not form or not lemma:
-            #     return False
+            # for value in (token_id, head, deprel):
+            #     if any(char.isspace() for char in value):
+            #         return False
 
-            if not form:
+            # FORM and LEMMA still may not contain tabs/newlines or be empty.
+            if not form or not lemma:
                 return False
 
-            # # Basic UD word rows require UPOS, HEAD and DEPREL.
-            # if upos == "_" or upos not in UD_UPOS:
+            # if not form:
             #     return False
+
+            # Basic UD word rows require UPOS, HEAD and DEPREL.
+            if upos == "_" or upos not in UD_UPOS:
+                return False
 
             if head == "_" or not head.isdigit():
                 return False
@@ -401,8 +564,8 @@ def is_valid_conllu_prediction(gold: str, prediction: str) -> bool:
             if base_deprel not in UD_DEPRELS:
                 return False
 
-            # if not _valid_feats(feats):
-            #     return False
+            if not _valid_feats(feats):
+                return False
 
             heads[idx] = head_id
             deprels[idx] = deprel
@@ -425,11 +588,9 @@ def is_valid_conllu_prediction(gold: str, prediction: str) -> bool:
         # Validation errors must never abort lm-eval.
         return False
 
-
-def sum_metric(items: list[float]) -> int:
-    """Aggregation used for conllu_invalid_count."""
-    return int(sum(items))
-
+# def sum_metric(items: list[float]) -> int:
+#     """Aggregation used for conllu_invalid_count."""
+#     return int(sum(items))
 
 def _parse_conllu(text: str) -> dict[int, tuple[str, str]]:
     """Parse ^-delimited token lines into {id: (head, deprel)}."""
@@ -444,7 +605,7 @@ def _parse_conllu(text: str) -> dict[int, tuple[str, str]]:
 
         cols = line.split("^")
 
-        if len(cols) != 4:
+        if len(cols) != 8:
             continue
 
         tok_id = cols[0]
@@ -457,12 +618,11 @@ def _parse_conllu(text: str) -> dict[int, tuple[str, str]]:
         except ValueError:
             continue
 
-        head = cols[2]
-        deprel = cols[3]
+        head = cols[6]
+        deprel = cols[7]
         parsed[idx] = (head, deprel)
 
     return parsed
-
 
 def _attachment_scores(gold: str, pred: str) -> tuple[float, float]:
     gold_map = _parse_conllu(gold)
@@ -484,15 +644,14 @@ def _attachment_scores(gold: str, pred: str) -> tuple[float, float]:
 
     return uas_hits / total, las_hits / total
 
-
 def process_results(doc: dict[str, str], results: list[str]) -> dict[str, float]:
     pred = results[0] if results else ""
 
     # for 8 columns
-    # uas, las = _attachment_scores(doc["label"], pred)
+    uas, las = _attachment_scores(doc["label"], pred)
 
-    # fixed to fit 4 columns
-    uas, las = _attachment_scores(doc_to_target(doc), pred)
+    # # fixed to fit 4 columns
+    # uas, las = _attachment_scores(doc_to_target(doc), pred)
 
     is_valid = is_valid_conllu_prediction(doc["label"], pred)
 
@@ -501,8 +660,8 @@ def process_results(doc: dict[str, str], results: list[str]) -> dict[str, float]
 
     record = {
         "text": doc["text"],
-        # "gold": doc["label"],
-        "gold": doc_to_target(doc),
+        "gold": doc["label"],
+        # "gold": doc_to_target(doc),
         "prediction": pred,
         "uas": uas,
         "las": las,
