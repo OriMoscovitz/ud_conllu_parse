@@ -56,20 +56,32 @@ legal dependency tree.
 
 ## ⚙️ Installation
 
-Clone the repository:
-
-```bash
-git clone https://github.com/OriMoscovitz/ud_conllu_parse.git
-cd ud_conllu_parse
-```
-
-Clone and install `lm-evaluation-harness`:
+Clone and install [`lm-evaluation-harness`](https://github.com/EleutherAI/lm-evaluation-harness):
 
 ```bash
 git clone https://github.com/EleutherAI/lm-evaluation-harness.git
 cd lm-evaluation-harness
 pip install -e .
+pip install -e ".[api]"
 ```
+
+Clone this task into the `lm_eval/tasks/` directory:
+
+```bash
+cd lm_eval/tasks/
+git clone https://github.com/OriMoscovitz/ud_conllu_parse.git
+cd ud_conllu_parse
+```
+
+### API Key
+
+The experiments use the LLM API provided by [e-INFRA CZ](https://chat.ai.e-infra.cz/). Obtain an API key from the service and export it before running the evaluation:
+
+```bash
+export OPENAI_API_KEY="<your-api-key>"
+```
+
+The API key is used by the `local-chat-completions` backend when connecting to the e-INFRA model endpoint.
 
 ## 🚀 Usage
 
