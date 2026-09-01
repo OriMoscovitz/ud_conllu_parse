@@ -184,4 +184,4 @@ These experiments led to the final configuration: an **eight-field CoNLL-U repre
 - [Universal Dependencies](https://universaldependencies.org/) - Universal framework and treebanks used for dependency parsing.
 - [LM Evaluation Harness](https://github.com/EleutherAI/lm-evaluation-harness) - Framework used to implement and evaluate the task.
 - Nivre, J. et al. (2020). [Universal Dependencies v2: An Evergrowing Multilingual Treebank Collection](https://aclanthology.org/2020.lrec-1.497/).
-- Biderman, S. et al. (2024). *Lessons from the Trenches on Reproducible Evaluation of Language Models*.
+- Biderman, S. et al. (2024). [Lessons from the Trenches on Reproducible Evaluation of Language Models](https://arxiv.org/pdf/2405.14782).
